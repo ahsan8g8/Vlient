@@ -22,9 +22,12 @@ jobs:
           gradle-version: "9.2.0"
       - name: Build JAR
         run: gradle build --no-daemon
-      - name: Verify JAR
+      - name: Prepare and verify JAR
         run: |
-          test -f build/libs/klyvren-client-1.21.11.jar
+          set -e
+          jars=(build/libs/*.jar)
+          test "${#jars[@]}" -ge 1
+          cp "${jars[0]}" build/libs/klyvren-client-1.21.11.jar
           unzip -t build/libs/klyvren-client-1.21.11.jar
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
