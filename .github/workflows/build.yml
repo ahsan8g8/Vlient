@@ -4,7 +4,7 @@ on:
   push:
     branches: ["main"]
 permissions:
-  contents: read
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,8 +22,19 @@ jobs:
           gradle-version: "9.2.0"
       - name: Build JAR
         run: gradle build --no-daemon
-      - name: Upload JAR
+      - name: Verify JAR
+        run: |
+          test -f build/libs/klyvren-client-1.21.11.jar
+          unzip -t build/libs/klyvren-client-1.21.11.jar
+      - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
           name: klyvren-client-1.21.11
-          path: build/libs/*.jar
+          path: build/libs/klyvren-client-1.21.11.jar
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Klyvren Client 1.21.11 Build ${{ github.run_number }}
+          generate_release_notes: true
+          files: build/libs/klyvren-client-1.21.11.jar
