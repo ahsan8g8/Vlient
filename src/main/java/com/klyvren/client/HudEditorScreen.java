@@ -5,6 +5,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 public final class HudEditorScreen extends Screen {
@@ -17,7 +18,7 @@ public final class HudEditorScreen extends Screen {
     public HudEditorScreen(Screen parent) { super(Component.literal("Klyvren HUD Editor")); this.parent = parent; }
 
     @Override protected void init() {
-        addRenderableWidget(Button.builder(Component.literal("Done"), b -> close()).bounds(width - 94, 12, 78, 24).build());
+        addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose()).bounds(width - 94, 12, 78, 24).build());
         clanBox = new EditBox(font, 16, height - 36, 180, 20, Component.literal("Clan name"));
         clanBox.setValue(KlyvrenHud.getClanName());
         clanBox.setMaxLength(24);
@@ -40,27 +41,27 @@ public final class HudEditorScreen extends Screen {
         super.render(g, mouseX, mouseY, delta);
     }
 
-    @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0) for (KlyvrenHud.Element e : KlyvrenHud.elements()) {
-            if (e.visible && e.contains(mouseX, mouseY)) {
-                dragging = e; dragOffX = mouseX - e.x; dragOffY = mouseY - e.y; return true;
+    @Override public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
+        if (event.button() == 0) for (KlyvrenHud.Element e : KlyvrenHud.elements()) {
+            if (e.visible && e.contains(event.x(), event.y())) {
+                dragging = e; dragOffX = event.x() - e.x; dragOffY = event.y() - e.y; return true;
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubled);
     }
 
-    @Override public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        if (button == 0 && dragging != null) {
-            dragging.x = clamp((int)(mouseX-dragOffX),0,width-dragging.width);
-            dragging.y = clamp((int)(mouseY-dragOffY),0,height-70-dragging.height);
+    @Override public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (event.button() == 0 && dragging != null) {
+            dragging.x = clamp((int)(event.x()-dragOffX),0,width-dragging.width);
+            dragging.y = clamp((int)(event.y()-dragOffY),0,height-70-dragging.height);
             return true;
         }
-        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+        return super.mouseDragged(event, dragX, dragY);
     }
 
-    @Override public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (button == 0 && dragging != null) { dragging=null; KlyvrenHud.save(); return true; }
-        return super.mouseReleased(mouseX, mouseY, button);
+    @Override public boolean mouseReleased(MouseButtonEvent event) {
+        if (event.button() == 0 && dragging != null) { dragging=null; KlyvrenHud.save(); return true; }
+        return super.mouseReleased(event);
     }
 
     private static int clamp(int value,int min,int max){return Math.max(min,Math.min(max,value));}
