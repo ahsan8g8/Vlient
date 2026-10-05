@@ -10,3 +10,6 @@ A Fabric 1.21.11 client-style HUD/settings mod with an original clean UI inspire
 
 ## Important
 This is not an exact copy of Feather's proprietary interface/assets. It is an original Klyvren implementation with the same kind of workflow: client menu, HUD modules, drag editor, presets/settings foundation.
+
+
+Klyvren build verification pass 1.
