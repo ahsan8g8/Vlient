@@ -32,7 +32,8 @@ public final class KlyvrenFeatures {
         add("zoom", "Zoom", "Visual", false);
         add("hitbox", "Hitbox Visualizer", "PvP", false);
         add("targetcolor", "Target Color", "PvP", true);
-        add("particles", "All Particles", "Visual", true);\n        add("klyvrenPulse", "Klyvren Pulse", "Visual", false);
+        add("particles", "All Particles", "Visual", true);
+        add("klyvrenPulse", "Klyvren Pulse", "Visual", false);
         add("clouds", "Clouds", "Visual", false);
         add("shadows", "Entity Shadows", "Visual", true);
         add("smoothlight", "Smooth Lighting", "Visual", true);
