@@ -1,6 +1,6 @@
 package com.klyvren.client;
 
-import com.mojang.math.Axis;
+
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
@@ -24,6 +24,6 @@ public final class KlyvrenTitleScreen extends Screen {
         super.render(g,mx,my,d);
     }
     private void drawTilted(GuiGraphics g,String text,float x,float y,float angle,int color){
-        g.pose().pushPose();g.pose().translate(x,y,0);g.pose().mulPose(Axis.ZP.rotationDegrees(angle));g.drawCenteredString(font,text,0,0,color);g.pose().popPose();
+        g.pose().pushMatrix();g.pose().translate(x,y);g.pose().rotate((float)Math.toRadians(angle));g.drawCenteredString(font,text,0,0,color);g.pose().popMatrix();
     }
 }
