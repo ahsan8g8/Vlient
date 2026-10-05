@@ -43,7 +43,7 @@ public final class KlyvrenClient implements ClientModInitializer {
     }
 
     private static boolean isComboDown(Minecraft client) {
-        long window = client.getWindow().getWindow();
+        long window = client.getWindow().handle();
         return GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS
                 && GLFW.glfwGetKey(window, GLFW.GLFW_KEY_1) == GLFW.GLFW_PRESS;
     }
