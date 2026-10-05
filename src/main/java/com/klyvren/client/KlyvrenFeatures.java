@@ -4,7 +4,6 @@ import net.minecraft.client.Minecraft;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/** Central settings for the Klyvren client. All entries are local/client-side. */
 public final class KlyvrenFeatures {
     public record Feature(String id, String name, String category, boolean defaultEnabled) {}
     public static final Map<String, Feature> ALL = new LinkedHashMap<>();
@@ -21,7 +20,7 @@ public final class KlyvrenFeatures {
         add("armor", "Armor Status", "HUD", false);
         add("effects", "Potion Effects", "HUD", false);
         add("target", "Target Info", "HUD", false);
-        add("clan", "Clan Name", "HUD", true);
+        add("clan", "Clan Tag", "HUD", false);
         add("clock", "Clock", "HUD", false);
         add("server", "Server Info", "HUD", false);
         add("speed", "Movement Speed", "HUD", false);
@@ -49,21 +48,34 @@ public final class KlyvrenFeatures {
     }
 
     private KlyvrenFeatures() {}
+
     private static void add(String id, String name, String category, boolean def) {
         ALL.put(id, new Feature(id, name, category, def));
         enabled.put(id, def);
     }
-    public static boolean isEnabled(String id) { return enabled.getOrDefault(id, false); }
+
+    public static boolean isEnabled(String id) {
+        return enabled.getOrDefault(id, false);
+    }
+
     public static void setEnabled(String id, boolean value) {
         if (!enabled.containsKey(id)) return;
         enabled.put(id, value);
         applyVanillaSetting(id, value);
         if (isEnabled("autosave")) KlyvrenHud.save();
     }
-    public static void toggle(String id) { setEnabled(id, !isEnabled(id)); }
-    public static void load() {
-        for (Feature f : ALL.values()) enabled.put(f.id(), f.defaultEnabled());
+
+    public static void toggle(String id) {
+        setEnabled(id, !isEnabled(id));
     }
+
+    public static void load() {
+        for (Feature f : ALL.values()) {
+            enabled.put(f.id(), f.defaultEnabled());
+            applyVanillaSetting(f.id(), f.defaultEnabled());
+        }
+    }
+
     private static void applyVanillaSetting(String id, boolean on) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.options == null) return;
