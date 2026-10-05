@@ -28,7 +28,7 @@ public final class KlyvrenScreen extends Screen {
   for(int i=0;i<visible.size();i++){var f=visible.get(i);int col=i%2,row=i/2,bx=cx+col*(cw+14),by=sy+row*42;if(by+34>y+ph-18)continue;boolean on=KlyvrenFeatures.isEnabled(f.id()),h=mx>=bx&&mx<=bx+cw&&my>=by&&my<=by+32;g.fill(bx,by,bx+cw,by+32,h?0xFF171A20:0xFF111318);g.drawString(font,f.name(),bx+12,by+6,0xFFE6E8EC,false);int sx=bx+cw-54;g.fill(sx,by+7,sx+40,by+25,on?0xFF5F3FA8:0xFF30343B);g.fill(on?sx+24:sx+4,by+10,on?sx+36:sx+16,by+22,0xFFFFFFFF);}
   g.drawString(font,"STYLE",cx,y+ph-58,0xFF777D88,false);drawButton(g,cx+52,y+ph-66,112,26,featherStyle?"FEATHER-STYLE":"KLYVREN",mx,my);
  }
- private void drawButton(GuiGraphics g,int x,int y,int w,int h,String s,int mx,int my){boolean h=mx>=x&&mx<=x+w&&my>=y&&my<=y+h;g.fill(x,y,x+w,y+h,h?0xFF2A2040:0xFF1A1722);g.drawString(font,s,x+10,y+8,0xFFD8C7FF,false);}
+ private void drawButton(GuiGraphics g,int x,int y,int w,int h,String s,int mx,int my){boolean hover=mx>=x&&mx<=x+w&&my>=y&&my<=y+h;g.fill(x,y,x+w,y+h,hover?0xFF2A2040:0xFF1A1722);g.drawString(font,s,x+10,y+8,0xFFD8C7FF,false);}
  @Override public boolean mouseClicked(MouseButtonEvent e,boolean dbl){
   if(e.button()!=GLFW.GLFW_MOUSE_BUTTON_LEFT)return super.mouseClicked(e,dbl);int pw=Math.min(940,width-24),ph=Math.min(620,height-24),px=(width-pw)/2,py=(height-ph)/2;if(System.currentTimeMillis()-openedAt<230)return true;
   int side=170;for(int i=0;i<TABS.length;i++){int ty=py+72+i*34;if(e.x()>=px+12&&e.x()<=px+side-12&&e.y()>=ty-4&&e.y()<=ty+22){tab=i;rebuild();return true;}}
