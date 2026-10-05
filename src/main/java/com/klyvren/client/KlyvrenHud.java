@@ -7,7 +7,7 @@ import com.google.gson.JsonParser;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,10 +18,10 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 
 public final class KlyvrenHud {
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(KlyvrenClient.MOD_ID, "hud");
+    public static final Identifier ID = Identifier.fromNamespaceAndPath(KlyvrenClient.MOD_ID, "hud");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path CONFIG = Minecraft.getInstance().gameDirectory.toPath().resolve("config/klyvren-hud.json");
-    private static final DateTimeFormatter CLOCK = DateTimeFormatter.ofPattern("HH:mm:ss");
+    private static final DateTimeFormatter CLOCK_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
     private static String clanName = "KLYVREN";
     private static final Deque<Long> leftClicks = new ArrayDeque<>();
     private static final Deque<Long> rightClicks = new ArrayDeque<>();
@@ -40,7 +40,7 @@ public final class KlyvrenHud {
     public static void tick(Minecraft client){
         if(client.player==null)return;
         long now=System.currentTimeMillis(); trim(leftClicks,now); trim(rightClicks,now);
-        long window=client.getWindow().getWindow();
+        long window=client.getWindow().handle();
         boolean left=GLFW.glfwGetMouseButton(window,GLFW.GLFW_MOUSE_BUTTON_LEFT)==GLFW.GLFW_PRESS;
         boolean right=GLFW.glfwGetMouseButton(window,GLFW.GLFW_MOUSE_BUTTON_RIGHT)==GLFW.GLFW_PRESS;
         if(left&&!previousLeft)leftClicks.addLast(now);
@@ -72,14 +72,14 @@ public final class KlyvrenHud {
           case "xyz"->String.format("XYZ  %d %d %d",p.getBlockX(),p.getBlockY(),p.getBlockZ());
           case "keystrokes"->"W "+(mc.options.keyUp.isDown()?"▲":"·")+"  A "+(mc.options.keyLeft.isDown()?"◀":"·")+"  S "+(mc.options.keyDown.isDown()?"▼":"·")+"  D "+(mc.options.keyRight.isDown()?"▶":"·");
           case "clan"->"CLAN  "+clanName;
-          case "clock"->"TIME  "+LocalTime.now().format(CLOCK);
+          case "clock"->"TIME  "+LocalTime.now().format(CLOCK_FORMAT);
           case "server"->"SERVER  "+(mc.getCurrentServer()==null?"singleplayer":mc.getCurrentServer().ip);
           case "armor"->"ARMOR  "+armor(p);
           case "target"->"TARGET  "+(mc.crosshairPickEntity==null?"none":mc.crosshairPickEntity.getName().getString());
           default->e.name;
         };
     }
-    private static int armor(LocalPlayer p){int n=0;for(var a:p.getArmorSlots())if(!a.isEmpty())n++;return n;}
+    private static int armor(LocalPlayer p){int n=0;for(var slot:net.minecraft.world.entity.EquipmentSlot.values())if(slot.getType()==net.minecraft.world.entity.EquipmentSlot.Type.HUMANOID_ARMOR&&!p.getItemBySlot(slot).isEmpty())n++;return n;}
     private static int ping(Minecraft mc){if(mc.getConnection()==null||mc.player==null)return 0;var i=mc.getConnection().getPlayerInfo(mc.player.getUUID());return i==null?0:i.getLatency();}
     public static Element[] elements(){return ELEMENTS;}
     public static String getClanName(){return clanName;}
