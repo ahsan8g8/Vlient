@@ -2,15 +2,16 @@ package com.klyvren.client;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import org.lwjgl.glfw.GLFW;
 import java.util.ArrayList;
 import java.util.List;
 
 public final class KlyvrenScreen extends Screen {
     private final Screen parent;
     private int tab = 0;
+    private long openedAt;
     private static final String[] TABS = {"HUD", "PvP", "Visual", "Performance", "Recording", "Mods", "Settings"};
     private List<KlyvrenFeatures.Feature> visible = List.of();
 
@@ -21,74 +22,146 @@ public final class KlyvrenScreen extends Screen {
 
     @Override
     protected void init() {
-        int navX = 18;
-        for (int i = 0; i < TABS.length; i++) {
-            int idx = i;
-            addRenderableWidget(Button.builder(Component.literal(TABS[i]), b -> {
-                tab = idx;
-                clearAndInit();
-            }).bounds(navX, 50, 82, 24).build());
-            navX += 86;
-        }
+        openedAt = System.currentTimeMillis();
+        rebuildVisible();
+    }
 
-        if (tab == 0) {
-            addRenderableWidget(Button.builder(Component.literal("HUD Editor"),
-                    b -> minecraft.setScreen(new HudEditorScreen(this)))
-                    .bounds(18, 92, 110, 24).build());
-        }
-
+    private void rebuildVisible() {
         visible = new ArrayList<>();
         String category = TABS[tab];
         for (var feature : KlyvrenFeatures.ALL.values()) {
             if (feature.category().equals(category)) visible.add(feature);
         }
-
-        int x = 18, y = 130, col = 0;
-        for (var feature : visible) {
-            int yy = y;
-            addRenderableWidget(Button.builder(label(feature), b -> {
-                KlyvrenFeatures.toggle(feature.id());
-                clearAndInit();
-            }).bounds(x, yy, 220, 24).build());
-
-            col++;
-            if (col % 2 == 0) {
-                x = 18;
-                y += 30;
-            } else {
-                x = 246;
-            }
-        }
-    }
-
-    private Component label(KlyvrenFeatures.Feature feature) {
-        return Component.literal((KlyvrenFeatures.isEnabled(feature.id()) ? "ON  " : "OFF ") + feature.name());
     }
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
-        renderBackground(g, mouseX, mouseY, delta);
+        long age = System.currentTimeMillis() - openedAt;
+        float t = Math.min(1f, age / 220f);
+        float ease = 1f - (1f - t) * (1f - t);
 
-        int left = Math.max(10, width / 2 - 390);
-        int right = Math.min(width - 10, width / 2 + 390);
+        // Lightweight black overlay. No blur, shaders, textures, or extra rendering.
+        g.fill(0, 0, width, height, 0xE9000000);
 
-        g.fill(left, 14, right, height - 14, 0xF00B0D12);
-        g.fill(left, 14, left + 5, height - 14, 0xFF8B5CF6);
+        int panelW = Math.min(940, width - 24);
+        int panelH = Math.min(620, height - 24);
+        int targetX = (width - panelW) / 2;
+        int targetY = (height - panelH) / 2;
+        int y = height + 20 - (int)((panelH + 20) * ease);
 
-        g.drawString(font, "KLYVREN CLIENT", left + 18, 22, 0xFFFFFFFF, false);
-        g.drawString(font, "35-feature Fabric client", left + 18, 36, 0xFF9A9EAA, false);
-        g.drawString(font, "RIGHT SHIFT + 1", Math.max(left + 250, right - 120), 25, 0xFFB9A5FF, false);
+        g.fill(targetX, y, targetX + panelW, y + panelH, 0xFF090A0D);
+        g.fill(targetX, y, targetX + 3, y + panelH, 0xFF8B5CF6);
 
-        g.fill(left + 10, 80, right - 10, 82, 0xFF242833);
-        g.drawString(font, TABS[tab], left + 18, 94, 0xFFFFFFFF, false);
+        int sidebar = 170;
+        g.fill(targetX + 3, y, targetX + sidebar, y + panelH, 0xFF0D0F13);
+        g.drawString(font, "KLYVREN", targetX + 22, y + 22, 0xFFFFFFFF, false);
+        g.drawString(font, "CLIENT", targetX + 22, y + 38, 0xFF8F96A3, false);
+        g.drawString(font, "Klyvren Studios", targetX + 22, y + panelH - 24, 0xFF606774, false);
 
-        if (tab == 0) {
-            g.drawString(font,
-                    "Open HUD Editor to drag enabled modules and save their positions.",
-                    left + 18, height - 32, 0xFFB9A5FF, false);
+        for (int i = 0; i < TABS.length; i++) {
+            int ty = y + 72 + i * 34;
+            boolean selected = i == tab;
+            g.fill(targetX + 12, ty - 4, targetX + sidebar - 12, ty + 22,
+                    selected ? 0xFF211735 : 0x00000000);
+            g.drawString(font, TABS[i], targetX + 26, ty + 3,
+                    selected ? 0xFFFFFFFF : 0xFF8D939E, false);
         }
 
-        super.render(g, mouseX, mouseY, delta);
+        int contentX = targetX + sidebar + 28;
+        g.drawString(font, TABS[tab], contentX, y + 25, 0xFFFFFFFF, false);
+        g.drawString(font, "Lightweight settings • no shader effects", contentX, y + 42, 0xFF737A86, false);
+
+        if (tab == 0) {
+            drawButton(g, contentX, y + 66, 116, 28, "HUD EDITOR", mouseX, mouseY);
+        }
+
+        int startY = y + 108;
+        int rowH = 42;
+        int colW = Math.min(285, (panelW - sidebar - 68) / 2);
+
+        for (int i = 0; i < visible.size(); i++) {
+            var feature = visible.get(i);
+            int col = i % 2;
+            int row = i / 2;
+            int bx = contentX + col * (colW + 14);
+            int by = startY + row * rowH;
+            if (by + 34 > y + panelH - 18) continue;
+
+            boolean enabled = KlyvrenFeatures.isEnabled(feature.id());
+            boolean hover = mouseX >= bx && mouseX <= bx + colW
+                    && mouseY >= by && mouseY <= by + 32;
+
+            g.fill(bx, by, bx + colW, by + 32, hover ? 0xFF171A20 : 0xFF111318);
+            g.drawString(font, feature.name(), bx + 12, by + 6, 0xFFE6E8EC, false);
+
+            int sx = bx + colW - 54;
+            int sy = by + 7;
+            g.fill(sx, sy, sx + 40, sy + 18, enabled ? 0xFF5F3FA8 : 0xFF30343B);
+            g.fill(enabled ? sx + 24 : sx + 4, sy + 3,
+                    enabled ? sx + 36 : sx + 16, sy + 15, 0xFFFFFFFF);
+        }
+
+        if (age < 240 && minecraft != null) minecraft.setScreen(this);
+    }
+
+    private void drawButton(GuiGraphics g, int x, int y, int w, int h, String text, int mx, int my) {
+        boolean hover = mx >= x && mx <= x + w && my >= y && my <= y + h;
+        g.fill(x, y, x + w, y + h, hover ? 0xFF2A2040 : 0xFF1A1722);
+        g.drawString(font, text, x + 12, y + 9, 0xFFD8C7FF, false);
+    }
+
+    @Override
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubled) {
+        if (event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) return super.mouseClicked(event, doubled);
+
+        int panelW = Math.min(940, width - 24);
+        int panelH = Math.min(620, height - 24);
+        int px = (width - panelW) / 2;
+        int py = (height - panelH) / 2;
+        if (System.currentTimeMillis() - openedAt < 230) return true;
+
+        int sidebar = 170;
+        for (int i = 0; i < TABS.length; i++) {
+            int ty = py + 72 + i * 34;
+            if (event.x() >= px + 12 && event.x() <= px + sidebar - 12
+                    && event.y() >= ty - 4 && event.y() <= ty + 22) {
+                tab = i;
+                rebuildVisible();
+                return true;
+            }
+        }
+
+        int contentX = px + sidebar + 28;
+        if (tab == 0 && event.x() >= contentX && event.x() <= contentX + 116
+                && event.y() >= py + 66 && event.y() <= py + 94) {
+            minecraft.setScreen(new HudEditorScreen(this));
+            return true;
+        }
+
+        int startY = py + 108;
+        int colW = Math.min(285, (panelW - sidebar - 68) / 2);
+        for (int i = 0; i < visible.size(); i++) {
+            var feature = visible.get(i);
+            int col = i % 2;
+            int row = i / 2;
+            int bx = contentX + col * (colW + 14);
+            int by = startY + row * 42;
+            if (event.x() >= bx && event.x() <= bx + colW
+                    && event.y() >= by && event.y() <= by + 32) {
+                KlyvrenFeatures.toggle(feature.id());
+                return true;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
+        if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
+            onClose();
+            return true;
+        }
+        return super.keyPressed(event);
     }
 
     @Override
