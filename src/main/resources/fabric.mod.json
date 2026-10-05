@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "klyvren",
+  "version": "${version}",
+  "name": "Klyvren Client",
+  "description": "A lightweight client-style HUD and settings shell for Fabric 1.21.11.",
+  "authors": ["Klyvren"],
+  "environment": "client",
+  "entrypoints": { "client": ["com.klyvren.client.KlyvrenClient"] },
+  "depends": {
+    "fabricloader": ">=0.18.0",
+    "minecraft": "1.21.11",
+    "fabric-api": "*"
+  }
+}
